@@ -1,0 +1,6 @@
+{
+  "name": "GNZX Blogger XML Master Studio & Merged Theme",
+  "description": "Master Merged Blogger XML Theme featuring Stories, 3D Coverflow, Marketplace Carousel, 4-Column Gallery, Modern Comments, and Advanced SEO.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

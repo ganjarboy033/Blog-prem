@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<html b:css='false' b:defaultwidgetversion='2' b:layoutsVersion='3' b:responsive='true' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/2005/gml/data' xmlns:expr='http://www.google.com/2005/gml/expr'>
+  <head>
+    <meta content='width=device-width, initial-scale=1' name='viewport'/>
+    <title><data:view.title.escaped/></title>
+    <b:include data='blog' name='all-head-content'/>
+
+    <link href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css' rel='stylesheet'/>
+
+    <b:skin><![CDATA[
+        :root {
+            --bg-color: #080b11;
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
+            --accent-color: #38bdf8;
+            --accent-gradient: linear-gradient(135deg, #3b82f6, #06b6d4);
+            --story-gradient: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --base-font-size: 16px;
+            --main-font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            --glass-blur: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--main-font-family); -webkit-tap-highlight-color: transparent; }
+        html { scroll-behavior: smooth; font-size: var(--base-font-size); }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden; position: relative;
+        }
+
+        header {
+            width: 100%; max-width: 480px; padding: 16px 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-color); backdrop-filter: blur(var(--glass-blur));
+            position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo { font-size: 1.25rem; font-weight: 800; color: var(--text-main); }
+        .logo span { color: var(--accent-color); }
+
+        .container { width: 100%; max-width: 480px; padding: 24px 20px; display: flex; flex-direction: column; align-items: center; }
+        .profile-section { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 35px; width: 100%; }
+
+        /* AVATAR STORY WRAPPER */
+        .avatar-container { position: relative; width: 130px; height: 130px; margin-bottom: 16px; }
+        .avatar-wrapper {
+            width: 100%; height: 100%; border-radius: 50%; padding: 4px;
+            background: var(--story-gradient); cursor: pointer; box-shadow: 0 0 20px rgba(220, 39, 67, 0.3);
+            display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease;
+        }
+        .avatar-wrapper:active { transform: scale(0.95); }
+        .avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background-color: #0f172a; border: 3px solid var(--bg-color); }
+
+        .story-add-badge {
+            position: absolute; bottom: 2px; right: 2px; width: 34px; height: 34px; border-radius: 50%;
+            background: #2563eb; color: #fff; border: 3px solid var(--bg-color); display: flex;
+            align-items: center; justify-content: center; font-size: 0.9rem; cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s ease;
+        }
+        .story-add-badge:hover { transform: scale(1.1); }
+
+        .profile-title { font-size: 1.5rem; font-weight: 800; line-height: 1.3; margin-bottom: 6px; }
+        .profile-title .highlight { color: var(--accent-color); }
+        .profile-bio { color: var(--text-sub); font-size: 0.88rem; margin-bottom: 18px; }
+
+        .section-box { width: 100%; margin-bottom: 35px; }
+        .gallery-grid-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; }
+        .gallery-card { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: var(--card-bg); border: 1px solid var(--border-color); cursor: pointer; }
+        .gallery-thumb { width: 100%; height: 100%; object-fit: cover; }
+
+        /* STORY VIEWER FULLSCREEN MODAL */
+        .story-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(15px); z-index: 2000;
+            display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
+        }
+        .story-modal-overlay.active { opacity: 1; visibility: visible; }
+
+        .story-card-box {
+            position: relative; width: 100%; max-width: 400px; height: 85vh; max-height: 720px;
+            background: #000; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .story-progress-container { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 4px; z-index: 20; }
+        .story-progress-segment { flex: 1; height: 3px; background: rgba(255, 255, 255, 0.3); border-radius: 3px; overflow: hidden; }
+        .story-progress-fill { height: 100%; width: 0%; background: #fff; }
+
+        .story-header {
+            position: absolute; top: 22px; left: 12px; right: 12px;
+            display: flex; align-items: center; justify-content: space-between; z-index: 20;
+        }
+        .story-user-info { display: flex; align-items: center; gap: 10px; }
+        .story-user-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid var(--accent-color); }
+        .story-username { font-size: 0.85rem; font-weight: 700; color: #fff; }
+        .story-time { font-size: 0.72rem; color: rgba(255, 255, 255, 0.85); font-weight: 600; display: flex; align-items: center; gap: 4px; }
+
+        .story-controls-top { display: flex; align-items: center; gap: 14px; }
+        .story-action-btn { background: transparent; border: none; color: #fff; font-size: 1.1rem; cursor: pointer; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+        .story-action-btn.delete-btn { color: #ef4444; }
+
+        .story-media-wrapper { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
+        .story-media-wrapper img, .story-media-wrapper video { width: 100%; height: 100%; object-fit: cover; }
+
+        .story-nav-touch { position: absolute; top: 0; bottom: 0; width: 40%; z-index: 10; }
+        .story-nav-left { left: 0; }
+        .story-nav-right { right: 0; }
+
+        .story-caption-box {
+            position: absolute; bottom: 20px; left: 16px; right: 16px;
+            background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px);
+            padding: 10px 14px; border-radius: 12px; color: #fff; font-size: 0.82rem; text-align: center; z-index: 20;
+        }
+
+        /* MODAL UPLOAD STORY */
+        .upload-modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(8, 11, 17, 0.85); backdrop-filter: blur(8px); z-index: 1500;
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+            opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
+        }
+        .upload-modal-overlay.active { opacity: 1; visibility: visible; }
+
+        .upload-modal-box {
+            background: var(--card-bg); backdrop-filter: blur(var(--glass-blur));
+            border: 1px solid var(--border-color); border-radius: 20px; width: 100%; max-width: 420px; padding: 20px;
+            display: flex; flex-direction: column; gap: 12px; position: relative;
+        }
+
+        .upload-title { font-size: 1.1rem; font-weight: 800; }
+        .upload-field { display: flex; flex-direction: column; gap: 6px; }
+        .upload-field label { font-size: 0.78rem; color: var(--text-sub); }
+        .upload-field input, .upload-field textarea {
+            width: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 8px 12px; color: var(--text-main); font-size: 0.82rem; outline: none;
+        }
+
+        .loading-status { display: none; font-size: 0.8rem; color: var(--accent-color); text-align: center; }
+
+        .btn-primary { background: var(--accent-gradient); color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; cursor: pointer; }
+
+        .main { display: none !important; }
+        footer { text-align: center; font-size: 0.75rem; color: var(--text-sub); padding-bottom: 30px; }
+    ]]></b:skin>
+  </head>
+
+  <body>
+    <header>
+      <div class='logo'>bagja<span>.dev</span></div>
+    </header>
+
+    <div class='container'>
+      <div class='profile-section' id='home'>
+        <div class='avatar-container'>
+          <div class='avatar-wrapper' onclick='openStoryModal()'>
+            <img alt='Profile Avatar' class='avatar-img' src='https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhQr_6Q2B6xIcyzYVfd3D5QpeH0YVaPzGM01Wgsp7msgcZ7X-dKoIdhdOFpO0gWdSxdaZhU-Tzzy_GyA39GF6svcSW9UK-1E39kZMqMjoNizs-Nv65xy_aY6vaFNh4MNiw5q5XphZbilf5uH6DUxQ0oMaGLMDtMK1E34r1GW5FCGVM0hskGWexFUDSZ7RA/s800/icon_untukdi_aboutthisapp.webp'/>
+          </div>
+          <button class='story-add-badge' onclick='openUploadStoryModal(event)' title='Tambah Story'><i class='fa-solid fa-plus'/></button>
+        </div>
+
+        <h1 class='profile-title'>Gandzar Subagja 👋</h1>
+        <p class='profile-bio'>Content Creator &amp; IT Support</p>
+      </div>
+
+      <div class='section-box' id='blog'>
+        <div class='gallery-grid-container' id='galleryGrid'></div>
+      </div>
+
+      <b:section class='main' id='main' showaddelement='yes'>
+        <b:widget id='Blog1' locked='true' title='Postingan Blog' type='Blog' version='2' visible='true'>
+          <b:includable id='main'>
+            <b:loop values='data:posts' var='post'>
+              <article class='post'><a expr:href='data:post.url'><data:post.title/></a></article>
+            </b:loop>
+          </b:includable>
+        </b:widget>
+      </b:section>
+
+      <footer>&#169; 2026 Gandzar Subagja - All rights reserved.</footer>
+    </div>
+
+    <!-- MODAL STORY VIEWER -->
+    <div class='story-modal-overlay' id='storyModal'>
+      <div class='story-card-box'>
+        <div class='story-progress-container' id='storyProgressContainer'></div>
+
+        <div class='story-header'>
+          <div class='story-user-info'>
+            <img alt='Avatar' class='story-user-avatar' src='https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEhQr_6Q2B6xIcyzYVfd3D5QpeH0YVaPzGM01Wgsp7msgcZ7X-dKoIdhdOFpO0gWdSxdaZhU-Tzzy_GyA39GF6svcSW9UK-1E39kZMqMjoNizs-Nv65xy_aY6vaFNh4MNiw5q5XphZbilf5uH6DUxQ0oMaGLMDtMK1E34r1GW5FCGVM0hskGWexFUDSZ7RA/s800/icon_untukdi_aboutthisapp.webp'/>
+            <div>
+              <div class='story-username'>Gandzar Subagja</div>
+              <div class='story-time' id='storyTime'><i class='fa-regular fa-clock'/> Baru saja</div>
+            </div>
+          </div>
+
+          <div class='story-controls-top'>
+            <button class='story-action-btn' onclick='downloadCurrentStory()' title='Download File Story'><i class='fa-solid fa-download'/></button>
+            <button class='story-action-btn delete-btn' onclick='deleteCurrentStory()' title='Hapus Story Ini'><i class='fa-solid fa-trash-can'/></button>
+            <button class='story-action-btn' onclick='closeStoryModalForce()'><i class='fa-solid fa-xmark'/></button>
+          </div>
+        </div>
+
+        <div class='story-media-wrapper' id='storyMediaWrapper'></div>
+
+        <div class='story-nav-touch story-nav-left' onclick='prevStory()'></div>
+        <div class='story-nav-touch story-nav-right' onclick='nextStory()'></div>
+
+        <div class='story-caption-box' id='storyCaption'>Caption story...</div>
+      </div>
+    </div>
+
+    <!-- MODAL UPLOAD STORY -->
+    <div class='upload-modal-overlay' id='uploadStoryModal' onclick='closeUploadStoryModal(event)'>
+      <div class='upload-modal-box'>
+        <div class='upload-title'><i class='fa-solid fa-circle-plus' style='color:var(--accent-color);'/> Tambah Story Baru</div>
+        
+        <div class='upload-field'>
+          <label>File Foto/Video Galeri (s.d. 100MB):</label>
+          <input accept='image/*,video/mp4,video/webm' id='storyFileInput' type='file'/>
+        </div>
+
+        <div class='upload-field'>
+          <label>Atau Paste Direct URL Video/Foto:</label>
+          <input id='storyUrlInput' placeholder='https://... (Foto/Video MP4)' type='text'/>
+        </div>
+
+        <div class='upload-field'>
+          <label>Caption Status:</label>
+          <textarea id='storyCaptionInput' placeholder='Tulis pesan status...' rows='2'></textarea>
+        </div>
+
+        <div class='loading-status' id='loadingStatus'><i class='fa-solid fa-spinner fa-spin'/> Memproses &amp; Menyimpan Video...</div>
+
+        <div style='display:flex; gap:8px; justify-content:flex-end; margin-top:8px;'>
+          <button class='btn-secondary' id='btnCancelUpload' onclick='closeUploadStoryModalForce()' style='padding:8px 14px;'>Batal</button>
+          <button class='btn-primary' id='btnSaveUpload' onclick='saveNewStory()' style='padding:8px 14px;'>Upload Story</button>
+        </div>
+      </div>
+    </div>
+
+    <script type='text/javascript'>
+      //<![CDATA[
+        let db;
+        const DB_NAME = "BlogStoryDB";
+        const STORE_NAME = "stories";
+
+        let storyList = [];
+        let storyIndex = 0;
+        let storyTimer = null;
+        let storyProgressInterval = null;
+        let currentProgress = 0;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            initIndexedDB();
+        });
+
+        /* SCRIPT INDEXEDDB UNTUK MENAMPUNG FILE BESAR HINGGA 100MB+ */
+        function initIndexedDB() {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = function (e) {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+                }
+            };
+            request.onsuccess = function (e) {
+                db = e.target.result;
+            };
+        }
+
+        function loadStoriesFromDB(callback) {
+            if (!db) {
+                setTimeout(() => loadStoriesFromDB(callback), 200);
+                return;
+            }
+            const tx = db.transaction(STORE_NAME, "readonly");
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.getAll();
+            request.onsuccess = function () {
+                storyList = request.result || [];
+                if (callback) callback();
+            };
+        }
+
+        function addStoryToDB(storyObj, callback) {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.add(storyObj);
+            request.onsuccess = function () {
+                if (callback) callback();
+            };
+        }
+
+        function deleteStoryFromDB(id, callback) {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.delete(id);
+            request.onsuccess = function () {
+                if (callback) callback();
+            };
+        }
+
+        /* PEMUTAR STORY */
+        function openStoryModal() {
+            loadStoriesFromDB(() => {
+                if (storyList.length === 0) {
+                    openUploadStoryModal();
+                    return;
+                }
+                storyIndex = 0;
+                document.getElementById('storyModal').classList.add('active');
+                document.body.style.overflow = 'hidden';
+                setupStorySegments();
+                showStoryContent();
+            });
+        }
+
+        function setupStorySegments() {
+            const container = document.getElementById('storyProgressContainer');
+            container.innerHTML = '';
+            storyList.forEach((_, idx) => {
+                const seg = document.createElement('div');
+                seg.className = 'story-progress-segment';
+                seg.innerHTML = `<div class="story-progress-fill" id="storyProgressFill_${idx}"></div>`;
+                container.appendChild(seg);
+            });
+        }
+
+        function showStoryContent() {
+            clearInterval(storyProgressInterval);
+            clearTimeout(storyTimer);
+
+            storyList.forEach((_, idx) => {
+                const fill = document.getElementById(`storyProgressFill_${idx}`);
+                if (!fill) return;
+                if (idx < storyIndex) fill.style.width = '100%';
+                else fill.style.width = '0%';
+            });
+
+            const currentStory = storyList[storyIndex];
+            const mediaWrapper = document.getElementById('storyMediaWrapper');
+            mediaWrapper.innerHTML = '';
+
+            document.getElementById('storyCaption').innerText = currentStory.caption || '';
+            document.getElementById('storyTime').innerHTML = `<i class="fa-regular fa-clock"></i> ${currentStory.time || 'Baru saja'}`;
+
+            let duration = 5000;
+
+            let mediaUrl = currentStory.url;
+            if (currentStory.fileBlob) {
+                mediaUrl = URL.createObjectURL(currentStory.fileBlob);
+            }
+
+            if (currentStory.type === 'video') {
+                const videoEl = document.createElement('video');
+                videoEl.src = mediaUrl;
+                videoEl.autoplay = true;
+                videoEl.playsInline = true;
+
+                videoEl.onloadedmetadata = function() {
+                    if (videoEl.duration && !isNaN(videoEl.duration)) {
+                        duration = videoEl.duration * 1000;
+                    }
+                    startStoryTimer(duration);
+                };
+                mediaWrapper.appendChild(videoEl);
+            } else {
+                const imgEl = document.createElement('img');
+                imgEl.src = mediaUrl;
+                mediaWrapper.appendChild(imgEl);
+                startStoryTimer(duration);
+            }
+        }
+
+        function startStoryTimer(duration) {
+            currentProgress = 0;
+            const currentFill = document.getElementById(`storyProgressFill_${storyIndex}`);
+            const stepTime = 50;
+            const increment = (stepTime / duration) * 100;
+
+            storyProgressInterval = setInterval(() => {
+                currentProgress += increment;
+                if (currentFill) currentFill.style.width = Math.min(currentProgress, 100) + '%';
+
+                if (currentProgress >= 100) {
+                    clearInterval(storyProgressInterval);
+                    nextStory();
+                }
+            }, stepTime);
+        }
+
+        function nextStory() {
+            if (storyIndex < storyList.length - 1) {
+                storyIndex++;
+                showStoryContent();
+            } else {
+                closeStoryModalForce();
+            }
+        }
+
+        function prevStory() {
+            if (storyIndex > 0) {
+                storyIndex--;
+                showStoryContent();
+            } else {
+                showStoryContent();
+            }
+        }
+
+        function closeStoryModalForce() {
+            clearInterval(storyProgressInterval);
+            clearTimeout(storyTimer);
+            document.getElementById('storyModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+
+            const mediaWrapper = document.getElementById('storyMediaWrapper');
+            if (mediaWrapper) mediaWrapper.innerHTML = '';
+        }
+
+        /* TOMBOL HAPUS STORY */
+        function deleteCurrentStory() {
+            if (!confirm("Apakah Anda yakin ingin menghapus story ini?")) return;
+
+            const targetStory = storyList[storyIndex];
+            deleteStoryFromDB(targetStory.id, () => {
+                loadStoriesFromDB(() => {
+                    if (storyList.length === 0) {
+                        closeStoryModalForce();
+                        alert("Semua story telah dihapus.");
+                    } else {
+                        if (storyIndex >= storyList.length) storyIndex = storyList.length - 1;
+                        setupStorySegments();
+                        showStoryContent();
+                    }
+                });
+            });
+        }
+
+        /* TOMBOL DOWNLOAD STORY */
+        function downloadCurrentStory() {
+            const currentStory = storyList[storyIndex];
+            if (!currentStory) return;
+
+            let downloadUrl = currentStory.url;
+            if (currentStory.fileBlob) {
+                downloadUrl = URL.createObjectURL(currentStory.fileBlob);
+            }
+
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `Story_GNZX_${Date.now()}.${currentStory.type === 'video' ? 'mp4' : 'jpg'}`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function openUploadStoryModal(e) {
+            if (e) e.stopPropagation();
+            document.getElementById('uploadStoryModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeUploadStoryModal(e) {
+            if (e.target.id === 'uploadStoryModal') closeUploadStoryModalForce();
+        }
+
+        function closeUploadStoryModalForce() {
+            document.getElementById('uploadStoryModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            document.getElementById('storyFileInput').value = '';
+            document.getElementById('storyUrlInput').value = '';
+            document.getElementById('storyCaptionInput').value = '';
+            document.getElementById('loadingStatus').style.display = 'none';
+        }
+
+        function getCurrentTimeString() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes} WIB`;
+        }
+
+        function saveNewStory() {
+            const fileInput = document.getElementById('storyFileInput');
+            const urlInput = document.getElementById('storyUrlInput').value.trim();
+            const captionInput = document.getElementById('storyCaptionInput').value.trim();
+            const timeFormatted = getCurrentTimeString();
+
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const isVideo = file.type.startsWith('video/');
+
+                document.getElementById('loadingStatus').style.display = 'block';
+
+                const newStoryObj = {
+                    type: isVideo ? 'video' : 'image',
+                    fileBlob: file,
+                    caption: captionInput || (isVideo ? 'Video Story' : 'Photo Story'),
+                    time: timeFormatted
+                };
+
+                addStoryToDB(newStoryObj, () => {
+                    closeUploadStoryModalForce();
+                    openStoryModal();
+                });
+            } else if (urlInput) {
+                const isVideo = urlInput.endsWith('.mp4') || urlInput.endsWith('.webm') || urlInput.includes('video');
+                const newStoryObj = {
+                    type: isVideo ? 'video' : 'image',
+                    url: urlInput,
+                    caption: captionInput || 'Story Status',
+                    time: timeFormatted
+                };
+
+                addStoryToDB(newStoryObj, () => {
+                    closeUploadStoryModalForce();
+                    openStoryModal();
+                });
+            } else {
+                alert('Silakan pilih file foto/video atau masukkan URL terlebih dahulu.');
+            }
+        }
+      //]]>
+    </script>
+  </body>
+</html>
